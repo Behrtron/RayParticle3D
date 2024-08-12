@@ -1,11 +1,12 @@
 #pragma once
-
 #include "raylib.h"
+#include "raymath.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
 #include <execution>
 #include <optional>
+
 
 // Utility structure to represent a range of float values
 struct FloatRange {
@@ -53,9 +54,15 @@ struct alignas(32) Particle {
         age = 0;
         origin = cfg.origin;
 
-        float randomAngleX = cfg.directionAngle.RandomValue();
-        float randomAngleY = cfg.velocityAngle.RandomValue();
-        Vector3 randomDir = Rotate(cfg.direction, randomAngleX, randomAngleY);
+        // Generate a random direction in 3D space
+        float theta = cfg.directionAngle.RandomValue() * DEG2RAD; // Azimuthal angle (around Y-axis)
+        float phi = cfg.velocityAngle.RandomValue() * DEG2RAD;    // Polar angle (from the Z-axis)
+
+        float x = sinf(phi) * cosf(theta);
+        float y = cosf(phi);
+        float z = sinf(phi) * sinf(theta);
+
+        Vector3 randomDir = Vector3Normalize({ x, y, z });
 
         velocity = Vector3Scale(randomDir, cfg.velocity.RandomValue());
         position = Vector3Add(cfg.origin, Vector3Scale(randomDir, cfg.offset.RandomValue()));
@@ -65,6 +72,7 @@ struct alignas(32) Particle {
         scale = 1.0f;
         active = true;
     }
+
 
     void Update(float dt, const EmitterConfig& cfg) {
         if (!active) return;
@@ -81,8 +89,8 @@ struct alignas(32) Particle {
         velocity = Vector3Add(velocity, Vector3Scale(externalAcceleration, dt));
         position = Vector3Add(position, Vector3Scale(velocity, dt));
 
-        if (cfg.collision && position.y <= 0.0f) {
-            position.y = 0.0f;
+        if (cfg.collision && position.y <= -1.0f) {
+            position.y = -1.0f;
             velocity.y *= -0.5f; // Simple bounce with energy loss
         }
 
@@ -118,7 +126,9 @@ public:
         config.direction = Vector3Normalize(config.direction);
         particles.resize(config.capacity);
     }
-
+    void SetOrigin(const Vector3& newOrigin) {
+        config.origin = newOrigin;
+    }
     void Start() { isEmitting = true; }
     void Stop() { isEmitting = false; }
 
@@ -136,26 +146,30 @@ public:
     unsigned long Update(float dt) {
         size_t emitNow = 0;
         unsigned long counter = 0;
+
         if (isEmitting) {
             mustEmit += dt * static_cast<float>(config.emissionRate);
             emitNow = static_cast<size_t>(mustEmit);
         }
 
-        std::for_each(std::execution::par_unseq, particles.begin(), particles.end(), [&](Particle& p) {
+        // Use a standard for_each without execution policy for compatibility
+        std::for_each(particles.begin(), particles.end(), [&](Particle& p) {
             if (p.active) {
                 p.Update(dt, config);
                 ++counter;
-            } else if (isEmitting && emitNow > 0) {
+            }
+            else if (isEmitting && emitNow > 0) {
                 p.Init(config);
                 p.Update(dt, config);
                 --emitNow;
                 --mustEmit;
                 ++counter;
             }
-        });
+            });
 
         return counter;
     }
+
 
     void Draw() const {
         BeginBlendMode(config.blendMode);
@@ -221,12 +235,21 @@ public:
     unsigned long Update(float dt) {
         unsigned long counter = 0;
 
-        std::for_each(std::execution::par_unseq, emitters.begin(), emitters.end(), [&](auto& e) {
+        // Use sequential execution if parallel execution is causing issues
+        //std::for_each(emitters.begin(), emitters.end(), [&](std::unique_ptr<Emitter>& e) {
+        //    counter += e->Update(dt);
+        //    });
+
+        // Alternatively, you can use parallel execution if your environment supports it
+        
+        std::for_each(std::execution::par, emitters.begin(), emitters.end(), [&](std::unique_ptr<Emitter>& e) {
             counter += e->Update(dt);
         });
+        
 
         return counter;
     }
+
 
     void Draw() const {
         for (const auto& e : emitters) {
@@ -238,4 +261,3 @@ private:
     std::vector<std::unique_ptr<Emitter>> emitters;
 };
 
-#endif // PARTICLE_SYSTEM_H
