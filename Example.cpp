@@ -31,10 +31,10 @@ int main() {
         .burst = { 0, 0 },
         .capacity = 500,
         .emissionRate = 200,
-        .origin = { 0.0f, 0.0f, 0.0f },
+        .origin = { 0.0f, -2.0f, 0.0f },
         .externalAcceleration = { 0.0f, 0.0f, 0.0f },
-        .startColor = (Color){ 255, 150, 0, 255 },
-        .endColor = (Color){ 255, 50, 0, 0 },
+        .startColor = Color{ 255, 150, 0, 255 },
+        .endColor = Color{ 255, 50, 0, 0 },
         .blendMode = BLEND_ADDITIVE,
         .model = fireModel,
         .gravity = 0.0f,
@@ -53,10 +53,10 @@ int main() {
         .burst = { 0, 0 },
         .capacity = 300,
         .emissionRate = 100,
-        .origin = { 0.0f, 0.0f, 0.0f },
+        .origin = { 0.0f, -2.0f, 0.0f },
         .externalAcceleration = { 0.0f, 0.0f, 0.0f },
-        .startColor = (Color){ 100, 100, 100, 150 },
-        .endColor = (Color){ 50, 50, 50, 0 },
+        .startColor = Color{ 100, 100, 100, 150 },
+        .endColor = Color{ 50, 50, 50, 0 },
         .blendMode = BLEND_ALPHA,
         .model = smokeModel,
         .gravity = 0.0f,
@@ -71,19 +71,20 @@ int main() {
         .velocityAngle = { -10.0f, 10.0f },
         .offset = { 0.0f, 0.5f },
         .originAcceleration = { 0.0f, 0.0f },
-        .age = { 1.0f, 2.0f },
+        .age = { 5.0f, 15.0f },
         .burst = { 0, 0 },
         .capacity = 100,
         .emissionRate = 50,
-        .origin = { 0.0f, 0.0f, 0.0f },
+        .origin = { 0.0f, -2.0f, 0.0f },
         .externalAcceleration = { 0.0f, 0.0f, 0.0f },
-        .startColor = (Color){ 255, 100, 0, 255 },
-        .endColor = (Color){ 255, 100, 0, 0 },
+        .startColor = Color{ 255, 100, 0, 255 },
+        .endColor = Color{ 255, 100, 0, 0 },
         .blendMode = BLEND_ADDITIVE,
         .model = emberModel,
-        .gravity = 9.8f,  // Gravity to make embers fall down
-        .collision = false
+        .gravity = 0.1f,  // Gravity to make embers fall down
+        .collision = true
     };
+
 
     // Create a single particle system and add all emitters to it
     ParticleSystem fireEffectSystem;
