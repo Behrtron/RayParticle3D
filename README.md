@@ -1,5 +1,27 @@
 ![Alt Text](demo.gif)
 
+for use on older hardware, see the update method in the rayparticle3d.h file:
+
+```cpp
+    unsigned long Update(float dt) {
+        unsigned long counter = 0;
+
+        // Use sequential execution if parallel execution is causing issues
+        //std::for_each(emitters.begin(), emitters.end(), [&](std::unique_ptr<Emitter>& e) {
+        //    counter += e->Update(dt);
+        //    });
+
+        // Alternatively, you can use parallel execution if your environment supports it
+        
+        std::for_each(std::execution::par, emitters.begin(), emitters.end(), [&](std::unique_ptr<Emitter>& e) {
+            counter += e->Update(dt);
+        });
+        
+
+        return counter;
+    }
+```
+
 # Particle System for Realistic 3D Effects
 
 ## Overview
